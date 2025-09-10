@@ -1,0 +1,70 @@
+name: CI-CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and push backend image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./backend
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/python-backend:latest
+
+    - name: Build and push frontend image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./frontend
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/python-frontend:latest
+
+    - name: Build and push logger image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./logger
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/python-logger:latest
+  fail_and_notify:
+    runs-on: ubuntu-latest
+    needs: build_and_push
+    steps:
+    - name: Force failure step
+      run: |
+        echo "This step will fail intentionally"
+        exit 1
+
+    - name: Send email on failure
+      if: failure()   # Only runs if the previous step failed
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "CI/CD Pipeline Failed 🚨"
+        body: |
+          The workflow failed in the job **fail_and_notify**.
+          Repo: ${{ github.repository }}
+          Commit: ${{ github.sha }}
+          Actor: ${{ github.actor }}
+          Check the logs here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        to: "pawan.yadav@sdbi.in"
+        from: "GitHub Actions <${{ secrets.EMAIL_USERNAME }}>"

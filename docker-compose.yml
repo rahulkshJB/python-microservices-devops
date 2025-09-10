@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000" # Expose backend on port 5000
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password123
+      - POSTGRES_DB=app_db
+    depends_on:
+      - db
+      - logger
+    volumes:
+      - ./backend:/app # Mount local code for development
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80" # Expose frontend on port 8080
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+
+  logger:
+    build: ./logger
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./logger:/app
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password123
+      - POSTGRES_DB=app_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+
+volumes:
+  postgres_data:
