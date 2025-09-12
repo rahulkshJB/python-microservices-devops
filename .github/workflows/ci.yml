@@ -66,5 +66,5 @@ jobs:
           Commit: ${{ github.sha }}
           Actor: ${{ github.actor }}
           Check the logs here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        to: "pawan.yadav@sdbi.in"
+        to: "rahul.kshirsagar@sdbi.in"
         from: "GitHub Actions <${{ secrets.EMAIL_USERNAME }}>"
